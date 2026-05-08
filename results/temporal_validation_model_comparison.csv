@@ -1,0 +1,4 @@
+Model,Validation ROC AUC,Artifact
+logistic_regression,0.7002270441646727,/Users/adityaranjan/Desktop/cse475-project/credit_risk_pd/models/logistic_regression_temporal.pkl
+xgboost,0.6995819568604167,/Users/adityaranjan/Desktop/cse475-project/credit_risk_pd/models/xgboost_temporal.pkl
+random_forest,0.6966066193927344,/Users/adityaranjan/Desktop/cse475-project/credit_risk_pd/models/random_forest_temporal.pkl

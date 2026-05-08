@@ -1,0 +1,7 @@
+{
+  "train_rows": 61523,
+  "validation_rows": 13184,
+  "feature_count": 102,
+  "target_rate_train": 0.20028282105879103,
+  "target_rate_validation": 0.20031856796116504
+}

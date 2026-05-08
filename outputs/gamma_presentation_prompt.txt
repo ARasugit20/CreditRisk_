@@ -1,0 +1,84 @@
+Create a professional, data-visualization-focused presentation in a dark theme for an 8-minute ML project talk. The audience is mixed technical/non-technical, so keep explanations clear, concise, and persuasive.
+
+Project context (use exactly as facts):
+- Project: Credit Risk Probability of Default (PD) prediction on LendingClub loans.
+- Target: Charged Off vs Fully Paid.
+- Dataset: 100,000-row sample from LendingClub accepted loans.
+- Final processed design matrix: 117 features.
+- Splits: 61,523 train / 13,184 validation / 13,184 test.
+
+Use these exact model metrics from evaluation:
+- Logistic Regression: ROC AUC = 0.734489024348186, Brier Score = 0.20467376390039718.
+- Random Forest: ROC AUC = 0.7357322992826597, Brier Score = 0.14125781889822983.
+- XGBoost: ROC AUC = 0.7383194557007864, Brier Score = 0.14063535929230905.
+
+Threshold/recall facts for XGBoost:
+- Optimal threshold on validation (max F1): 0.21 with recall = 0.6293070806512685 (about 62.9%).
+- Recall at threshold 0.40: 0.2556818181818182 (about 25.57%).
+- Recall at threshold 0.30: 0.42348484848484846 (about 42.35%).
+
+SMOTE impact on validation AUC (train only): Logistic Regression delta = -0.000449, Random Forest delta = -0.006926, XGBoost delta = -0.003340. Note that this is expected when the post-filtered dataset already has sufficient minority-class representation and synthetic oversampling can inject extra noise.
+
+Top 5 SHAP features (exact values):
+1) term__36_months = 0.44786617
+2) acc_open_past_24mths = 0.17078875
+3) dti = 0.15111957
+4) installment_to_income = 0.14992595
+5) fico_range_low = 0.13681372
+
+Critical leakage story (must be centerpiece):
+- Earlier model performance was unrealistically high (~0.99 AUC) due to leakage from post-origination payment/recovery style variables.
+- After removing leakage columns, AUC dropped to realistic levels in the mid-0.73 range.
+- Emphasize this as a credibility improvement, not a regression.
+
+Ablation fact to include:
+- Tree-based ablation: removing engineered feature bundle changed AUC from 0.7365 to 0.7372 (no real gain from engineered transforms for boosted trees).
+
+Now generate exactly 8 slides with this structure:
+
+Slide 1 — Title + Motivation
+- Title: “Credit Risk PD Modeling on LendingClub Data (Leakage-Aware)”
+- Motivation: why PD matters for lending decisions, portfolio loss, and approval strategy.
+
+Slide 2 — Problem Definition + Data
+- Define binary target and business objective.
+- State dataset/sample and split sizes exactly: 100,000 rows, 117 features, 61,523 train / 13,184 val / 13,184 test.
+
+Slide 3 — Pipeline Overview
+- Show end-to-end flow: preprocessing -> model training (LR/RF/XGB) -> evaluation (ROC AUC, Brier) -> calibration/SHAP/ablation.
+- Mention strict split hygiene: validation for tuning, test reserved for final evaluation.
+
+Slide 4 — Leakage Fix Story (centerpiece)
+- Explain what leakage was conceptually.
+- Show “~0.99 AUC before leakage fix -> realistic ~0.73 after fix”.
+- Position this as core scientific validity result.
+
+Slide 5 — Results Table + ROC Curve
+- Include a table with exact ROC AUC and Brier for LR/RF/XGB.
+- Explicitly identify XGBoost as best overall on both ranking and probability quality.
+- Add chart placeholder with exact filename label: results/all_models_roc_comparison.png
+
+Slide 6 — SHAP + Threshold Tradeoff
+- Show top 5 SHAP features with exact importance values and one-line business interpretation each.
+- Show threshold tradeoff: recall 25.57% at 0.40 vs 42.35% at 0.30; frame as business tradeoff between catching defaults and avoiding false rejections.
+- Add chart/image placeholder labels with exact filenames:
+  - outputs/shap_summary.png
+  - outputs/shap_importance.png
+
+Slide 7 — Ablation Finding
+- Report ablation result: engineered bundle removed changed AUC 0.7365 -> 0.7372.
+- Explain why this is expected for XGBoost (it learns nonlinear transforms implicitly), while engineered features are often more useful for linear models.
+- Add chart/table placeholder label with exact filename: outputs/ablation_results.csv
+
+Slide 8 — Conclusion + Remaining Work
+- Key takeaways: leakage-fixed credibility, XGBoost best current model, threshold is policy choice.
+- Remaining work: finalize tuning artifacts and lock final report narrative.
+- End with one concise takeaway sentence for non-expert audience.
+
+Design instructions:
+- Professional dark theme, clean typography, high contrast text.
+- Use modern data-viz style with minimal clutter.
+- Keep each slide presentation-ready with concise speaker notes.
+- Do not invent any metrics beyond the values above.
+- Do not leave placeholders for numbers; all required numeric values are already provided and must be used exactly.
+

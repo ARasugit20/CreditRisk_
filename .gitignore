@@ -1,21 +1,21 @@
 .DS_Store
 __pycache__/
 *.py[cod]
+.env
+.env.*
 
 .venv/
 .mplconfig/
-
-data/*.csv
-data/*.gz
-data/*.zip
-data/*.parquet
-data/*.pkl
 credit_risk_pd/
+
+# Keep only the huge raw dataset excluded.
+data/accepted_2007_to_2018Q4.csv
+data/rejected_2007_to_2018Q4.csv
+data/*.csv.gz
+data/accepted_2007_to_2018q4.csv/
+data/rejected_2007_to_2018q4.csv/
+
+# Exclude model binaries/artifacts.
 models/*.pkl
 models/*.joblib
-models/*.json
 models/*.ubj
-outputs/
-results/
-
-!.gitkeep
