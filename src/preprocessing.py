@@ -11,11 +11,14 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
+
+from pipeline import (
+    fit_preprocessing_pipeline,
+    infer_column_types,
+    save_pipeline_artifact,
+    transform_with_pipeline,
+)
 
 from utils import (
     DATA_DIR,
@@ -292,81 +295,14 @@ def sanitize_feature_names(feature_names: list[str]) -> list[str]:
     return sanitized_names
 
 
-def classify_feature_types(
-    frame: pd.DataFrame,
-    low_cardinality_threshold: int,
-) -> tuple[list[str], list[str], list[str]]:
-    """Classify features as numeric, low-cardinality categorical, or high-cardinality categorical."""
-
-    features = feature_columns(frame)
-    numeric_columns = [
-        column for column in features if pd.api.types.is_numeric_dtype(frame[column])
-    ]
-    categorical_columns = [column for column in features if column not in numeric_columns]
-
-    low_cardinality = [
-        column
-        for column in categorical_columns
-        if frame[column].nunique(dropna=True) <= low_cardinality_threshold
-    ]
-    high_cardinality = [
-        column for column in categorical_columns if column not in low_cardinality
-    ]
-    return numeric_columns, low_cardinality, high_cardinality
-
-
-def make_preprocessor(
-    numeric_columns: list[str],
-    low_cardinality_columns: list[str],
-    high_cardinality_columns: list[str],
-) -> ColumnTransformer:
-    """Build a sklearn transformer for imputation, encoding, and numeric scaling."""
-
-    numeric_pipeline = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", StandardScaler()),
-        ]
-    )
-    low_cardinality_pipeline = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            (
-                "onehot",
-                OneHotEncoder(handle_unknown="ignore", sparse_output=False),
-            ),
-        ]
-    )
-    high_cardinality_pipeline = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            (
-                "ordinal",
-                OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
-            ),
-        ]
-    )
-
-    return ColumnTransformer(
-        transformers=[
-            ("num", numeric_pipeline, numeric_columns),
-            ("cat_low", low_cardinality_pipeline, low_cardinality_columns),
-            ("cat_high", high_cardinality_pipeline, high_cardinality_columns),
-        ],
-        remainder="drop",
-        verbose_feature_names_out=False,
-    )
-
-
 def transform_split(
-    preprocessor: ColumnTransformer,
+    preprocessing_pipeline,
     frame: pd.DataFrame,
     feature_names: list[str],
 ) -> pd.DataFrame:
     """Transform one split and append target plus portfolio EAD metadata if available."""
 
-    transformed = preprocessor.transform(frame)
-    processed = pd.DataFrame(transformed, columns=feature_names, index=frame.index)
+    processed = transform_with_pipeline(preprocessing_pipeline, frame, feature_names)
     processed[TARGET_COLUMN] = frame[TARGET_COLUMN].to_numpy()
     if EAD_COLUMN in frame.columns:
         processed[EAD_COLUMN] = pd.to_numeric(frame[EAD_COLUMN], errors="coerce").fillna(0).to_numpy()
@@ -430,24 +366,23 @@ def preprocess_lending_club(
     else:
         train_frame, validation_frame, test_frame = split_data(cleaned_frame)
 
-    numeric_columns, low_cardinality_columns, high_cardinality_columns = classify_feature_types(
+    candidate_features = feature_columns(train_frame)
+    numeric_columns, categorical_columns = infer_column_types(
         train_frame,
-        low_cardinality_threshold,
+        candidate_features=candidate_features,
     )
     logging.info(
-        "Feature groups: %d numeric, %d low-cardinality categorical, %d high-cardinality categorical.",
+        "Feature groups: %d numeric and %d categorical columns.",
         len(numeric_columns),
-        len(low_cardinality_columns),
-        len(high_cardinality_columns),
+        len(categorical_columns),
     )
 
-    preprocessor = make_preprocessor(
-        numeric_columns,
-        low_cardinality_columns,
-        high_cardinality_columns,
+    preprocessor, transformed_feature_names = fit_preprocessing_pipeline(
+        train_frame,
+        feature_names=candidate_features,
     )
-    preprocessor.fit(train_frame)
-    transformed_feature_names = sanitize_feature_names(preprocessor.get_feature_names_out().tolist())
+    transformed_feature_names = sanitize_feature_names(transformed_feature_names)
+    save_pipeline_artifact(preprocessor, f"{output_prefix}preprocessing_pipeline.pkl")
 
     processed_train = transform_split(preprocessor, train_frame, transformed_feature_names)
     processed_validation = transform_split(preprocessor, validation_frame, transformed_feature_names)
@@ -478,8 +413,8 @@ def preprocess_lending_club(
             column for column in LEAKAGE_COLUMNS if column in cleaned_frame.columns
         ],
         "numeric_columns": numeric_columns,
-        "one_hot_categorical_columns": low_cardinality_columns,
-        "ordinal_encoded_categorical_columns": high_cardinality_columns,
+        "one_hot_categorical_columns": categorical_columns,
+        "ordinal_encoded_categorical_columns": [],
         "final_feature_count": len(transformed_feature_names),
         "ead_metadata_column_preserved": EAD_COLUMN in cleaned_frame.columns,
     }
