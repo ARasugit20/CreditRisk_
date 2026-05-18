@@ -1,6 +1,61 @@
 # Credit Risk PD Pipeline
 
-Phase 4 modules for calibrated probability-of-default modeling on LendingClub loans.
+End-to-end **probability-of-default (PD)** modeling on LendingClub loan data: preprocessing, supervised models (logistic regression, random forest, XGBoost), calibration, SHAP interpretability, portfolio simulation, and segment-level diagnostics.
+
+Repository: [github.com/ARasugit20/CreditRisk_](https://github.com/ARasugit20/CreditRisk_)
+
+## What This Project Does
+
+| Stage | Module | Purpose |
+|-------|--------|---------|
+| Preprocess | `src/preprocessing.py`, `src/pipeline.py` | Filter targets, engineer features, sklearn `Pipeline` + `ColumnTransformer`, train-only fit |
+| Train | `src/train.py` | Baseline + tree/boosted models |
+| Tune | `src/tune.py` | `GridSearchCV` with average precision; learning curves |
+| Evaluate | `src/evaluate.py` | ROC AUC, PR AUC, Brier, ECE, bootstrap CIs |
+| Calibrate | `src/calibration.py`, `src/reliability_diagrams.py` | Platt scaling, reliability diagrams |
+| Explain | `src/shap_analysis.py` | SHAP summary, importance, dependence |
+| Segment | `src/segment_analysis.py` | Performance by grade and loan purpose |
+| NLP | `src/nlp_analysis.py` | Borrower text frequencies (charged-off vs paid) |
+| Explore | `notebooks/eda.ipynb`, `notebooks/results_summary.ipynb` | EDA and output dashboard |
+
+## Latest Test Metrics (holdout)
+
+| Model | ROC AUC | PR AUC | Brier | ECE |
+|-------|---------|--------|-------|-----|
+| XGBoost | 0.738 | 0.417 | 0.141 | 0.014 |
+| Random Forest | 0.736 | 0.413 | 0.141 | 0.014 |
+| Logistic Regression | 0.734 | 0.414 | 0.205 | 0.243 |
+
+Full tables: `results/test_metrics.csv`, `results/metrics.json`.
+
+## Quick Start (developers)
+
+```bash
+pip install -r requirements.txt
+python -m nltk.downloader punkt stopwords   # first run only, for nlp_analysis.py
+bash scripts/run_full_analysis.sh
+```
+
+Or step-by-step:
+
+```bash
+pip install -r requirements.txt
+python src/sample_data.py --mode random --rows 100000
+python src/preprocessing.py
+python src/train.py --include-xgboost
+python src/tune.py
+MPLBACKEND=Agg python src/evaluate.py
+MPLBACKEND=Agg python src/calibration.py
+MPLBACKEND=Agg python src/reliability_diagrams.py
+MPLBACKEND=Agg python src/portfolio_simulation.py
+MPLBACKEND=Agg python src/shap_analysis.py
+python src/segment_analysis.py
+python src/nlp_analysis.py
+MPLBACKEND=Agg python src/ablation.py --train-sample-size 0
+python src/compare_experiments.py
+```
+
+**Branch with enhancements:** `feature/pd-enhancements-modular-analytics`
 
 ## Expected Files
 
@@ -12,7 +67,7 @@ Default data names searched:
 - raw sample input: `data/accepted_2007_to_2018Q4.csv`
 - generated sample: `data/lending_club_sample.csv` (default input to `preprocessing.py`, matching `sample_data.py` output)
 
-**Data directory layout:** Keep CSVs directly under `credit_risk_pd/data/`. Do not nest another `credit_risk_pd/` (or duplicate project tree) inside `data/`; scripts resolve paths from the project root only.
+**Data directory layout:** Keep CSVs directly under the project `data/` folder. Do not nest another project tree inside `data/`.
 
 Default model artifact names searched:
 
@@ -21,31 +76,21 @@ Default model artifact names searched:
 - XGBoost: `xgboost.pkl`, `xgb.pkl`, `xgb_model.pkl`, `xgboost.json`
 - MLP: `mlp.pkl`, `mlp_model.pkl`, `neural_network.pkl`
 
-The real-data preprocessing script filters `loan_status` to Fully Paid / Charged Off,
-drops leakage features from model inputs, imputes missing values, encodes categorical
-features, scales numeric features, and creates stratified 70/15/15 splits.
+The preprocessing script filters `loan_status` to Fully Paid / Charged Off, drops leakage features, imputes and encodes features, and creates stratified 70/15/15 splits (or optional temporal splits by `issue_d`).
 
-**Canonical train/validation/test protocol:** The default preprocessing split is **random stratified 70/15/15** (same distribution across partitions). A **temporal** split (train/validation/test by `issue_d` cutoffs) is an optional robustness experiment; use `--split-strategy temporal` and matching `--output-prefix` / train paths so metrics stay comparable to `compare_experiments.py`.
+## New Module Outputs (`outputs/`)
 
-## Run Order
+| Artifact | Produced by |
+|----------|-------------|
+| `learning_curves.png` | `src/tune.py` |
+| `segment_performance.csv` | `src/segment_analysis.py` |
+| `segment_calibration_by_grade.png` | `src/segment_analysis.py` |
+| `nlp_top_words.png`, `nlp_top_bigrams.png` | `src/nlp_analysis.py` |
+| `reliability_diagrams.png`, `shap_*.png` | existing analysis modules |
 
-From the project root:
+Serialized preprocessing artifact: `models/preprocessing_pipeline.pkl` (gitignored; regenerate via `preprocessing.py`).
 
-```bash
-pip install -r requirements.txt
-python src/sample_data.py --mode random --rows 100000
-python src/preprocessing.py
-python src/train.py --include-xgboost
-MPLBACKEND=Agg python src/evaluate.py
-MPLBACKEND=Agg python src/calibration.py
-MPLBACKEND=Agg python src/reliability_diagrams.py
-MPLBACKEND=Agg python src/portfolio_simulation.py
-MPLBACKEND=Agg python src/shap_analysis.py
-MPLBACKEND=Agg python src/ablation.py --train-sample-size 0
-python src/compare_experiments.py
-```
-
-Temporal robustness experiment (recommended):
+## Temporal Robustness Experiment
 
 ```bash
 python src/preprocessing.py --split-strategy temporal --train-end-date 2015-12-31 --validation-end-date 2016-12-31 --output-prefix temporal_
@@ -54,23 +99,27 @@ MPLBACKEND=Agg python src/evaluate.py --test-path data/temporal_processed_test.c
 python src/compare_experiments.py
 ```
 
-If your files use different names:
+## Knowledge Sources & Implementation Map
 
-```bash
-python src/calibration.py --train-path data/processed_train.csv --test-path data/processed_test.csv
-python src/calibration.py --artifact xgboost=models/my_xgb.pkl --artifact random_forest=models/my_rf.pkl
-```
+This project applies techniques from **Fabio Nelli**, *Python Data Analytics: With Pandas, NumPy, and Matplotlib* (2nd ed., Apress, 2018), accessed via [Skillsoft](https://www.skillsoft.com/book/python-data-analytics-with-pandas-numpy-and-matplotlib-second-edition-52ebe53b-efba-4688-a70d-c3c333b6aa36).
 
-## Outputs
+| Book chapter (Nelli, 2nd ed.) | Technique | Where used in this repo |
+|-------------------------------|-----------|-------------------------|
+| **Ch 6 — Pandas in Depth: Data Manipulation** | `groupby`, aggregations, pivot tables, method chaining | `notebooks/eda.ipynb`, `src/segment_analysis.py` |
+| **Ch 7 — Data Visualization with Matplotlib** | Custom `rcParams`, multi-panel figures | `src/plot_style.py`, `src/segment_analysis.py`, `src/tune.py`, `src/nlp_analysis.py` |
+| **Ch 13 — Textual Data Analysis with NLTK** | Tokenization, `FreqDist`, bigrams | `src/nlp_analysis.py` |
+| **Ch 3 — The NumPy Library** | Vectorized numeric transforms (`log1p`, array ops) | `src/preprocessing.py` (`add_engineered_features`) |
+| **Ch 8 — Machine Learning with Scikit-Learn** | Pipelines, `ColumnTransformer`, `GridSearchCV` | `src/pipeline.py`, `src/tune.py`, `src/calibration.py` |
 
-Generated figures and tables are saved under `outputs/`, including:
+### Citation (APA)
 
-- `reliability_diagrams.png`
-- `portfolio_simulation.png`
-- `shap_summary.png`
-- `shap_importance.png`
-- `shap_dependence_*.png`
-- `results/metrics.json`
-- `results/test_metrics.csv`
-- ROC, precision-recall, and confusion-matrix plots in `results/`
-- CSV summaries for calibration, portfolio simulation, SHAP importance, and ablation
+> Nelli, F. (2018). *Python data analytics: With Pandas, NumPy, and Matplotlib* (2nd ed.). Apress. https://www.skillsoft.com/book/python-data-analytics-with-pandas-numpy-and-matplotlib-second-edition-52ebe53b-efba-4688-a70d-c3c333b6aa36
+
+Additional references used in the modeling stack:
+
+- Lundberg, S. M., & Lee, S.-I. (2017). A unified approach to interpreting model predictions (SHAP). *NeurIPS*.
+- scikit-learn documentation: probability calibration (`CalibratedClassifierCV`), `learning_curve`, stratified cross-validation.
+
+## Dependencies
+
+See `requirements.txt`. New library for text analysis: **`nltk>=3.8`**.
