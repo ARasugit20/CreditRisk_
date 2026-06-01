@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from utils import RESULTS_DIR
 
 
 def parse_args() -> argparse.Namespace:

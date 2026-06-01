@@ -15,7 +15,23 @@ data/*.csv.gz
 data/accepted_2007_to_2018q4.csv/
 data/rejected_2007_to_2018q4.csv/
 
+# Regenerate locally via preprocessing (see README Data Setup).
+data/processed_*.csv
+data/temporal_processed_*.csv
+data/test_processed_*.csv
+data/train_*.csv
+data/val_*.csv
+data/test_*.csv
+
+# Pytest-generated artifacts
+outputs/test_*.json
+
 # Exclude model binaries/artifacts.
 models/*.pkl
 models/*.joblib
 models/*.ubj
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/

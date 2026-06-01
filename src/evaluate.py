@@ -30,7 +30,6 @@ from utils import (
     F1_THRESHOLD,
     MODELS_DIR,
     RESULTS_DIR,
-    TARGET_COLUMN,
     configure_logging,
     ensure_directories,
     prepare_xy,
