@@ -6,6 +6,42 @@ End-to-end **probability-of-default (PD)** modeling on LendingClub loan data: pr
 
 Repository: [github.com/ARasugit20/CreditRisk_](https://github.com/ARasugit20/CreditRisk_)
 
+## Architecture
+
+```
+lending_club_sample.csv
+        │
+        ▼  (scripts/load_to_duckdb.py)
+DuckDB [raw.loans]
+        │
+        ▼  (dbt run)
+┌─────────────────────────────────────────┐
+│  staging/stg_loans                      │  ← clean + type-cast
+│  core/dim_borrower                      │  ← borrower segments
+│  core/fct_loan_performance              │  ← fact table
+│  marts/mart_features          ◀── ML    │  ← model reads here
+│  marts/mart_default_metrics             │  ← business KPIs
+└─────────────────────────────────────────┘
+        │
+        ▼  (scripts/export_features.py)
+data/mart_features.parquet
+        │
+        ▼
+XGBoost + Platt calibration (src/)
+```
+
+**BQ-ready:** Replace DuckDB with BigQuery by updating `credit_risk_dbt/profiles.yml`.
+dbt models are warehouse-agnostic SQL.
+
+**Warehouse commands:**
+
+```bash
+pip install -r requirements.txt
+python scripts/load_to_duckdb.py
+cd credit_risk_dbt && dbt run --profiles-dir . && dbt test --profiles-dir . && cd ..
+python scripts/export_features.py
+```
+
 ## Executive Summary
 
 **Business problem.** A lender must estimate the probability that a newly originated consumer loan will **charge off** (default) before maturity. Accurate PDs drive pricing (interest rates), portfolio limits, and expected-loss reserves.

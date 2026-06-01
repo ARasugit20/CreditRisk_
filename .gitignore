@@ -15,6 +15,10 @@ data/*.csv.gz
 data/accepted_2007_to_2018q4.csv/
 data/rejected_2007_to_2018q4.csv/
 
+# DuckDB warehouse + dbt exports (regenerate locally).
+data/*.duckdb
+data/mart_features.parquet
+
 # Regenerate locally via preprocessing (see README Data Setup).
 data/processed_*.csv
 data/temporal_processed_*.csv
@@ -35,3 +39,9 @@ models/*.ubj
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+
+# dbt artifacts
+credit_risk_dbt/target/
+credit_risk_dbt/dbt_packages/
+credit_risk_dbt/logs/
+credit_risk_dbt/.user.yml

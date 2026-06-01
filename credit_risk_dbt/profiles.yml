@@ -1,0 +1,7 @@
+credit_risk_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "../data/credit_risk.duckdb"
+      threads: 4

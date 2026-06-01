@@ -1,4 +1,10 @@
-"""Train baseline and stronger supervised models for LendingClub default prediction."""
+"""Train baseline and stronger supervised models for LendingClub default prediction.
+
+Features can be loaded from the dbt mart (DuckDB) — same pattern as BigQuery in production:
+  python scripts/load_to_duckdb.py && cd credit_risk_dbt && dbt run --profiles-dir . && cd ..
+  python scripts/export_features.py
+  # df = pd.read_parquet("data/mart_features.parquet")
+"""
 
 from __future__ import annotations
 

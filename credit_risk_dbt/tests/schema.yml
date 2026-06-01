@@ -1,0 +1,36 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: loans
+
+models:
+  - name: stg_loans
+    description: "Cleaned and typed raw loan applications"
+    columns:
+      - name: loan_id
+        tests:
+          - unique
+          - not_null
+      - name: is_default
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+      - name: issue_date
+        tests:
+          - not_null
+
+  - name: mart_features
+    description: "ML-ready feature mart — model reads from here, not CSV"
+    columns:
+      - name: loan_id
+        tests:
+          - unique
+          - not_null
+
+  - name: mart_default_metrics
+    description: "Business KPIs: default rate by grade and vintage"
