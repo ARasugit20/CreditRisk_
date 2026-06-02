@@ -10,6 +10,7 @@ Used to support loan approval decisions and risk tier assignment (portfolio demo
 - **Source:** LendingClub public dataset (Kaggle)
 - **Grain:** one row per loan application
 - **Raw sample in repo:** `data/lending_club_sample.csv` (~100,000 applications)
+- **Feature mart (SQL):** `mart_features` in DuckDB via dbt → `data/mart_features.parquet` (see [WAREHOUSE.md](WAREHOUSE.md))
 - **Training period (temporal split):** loans with `issue_d` on or before **2015-12-31** (36,491 rows after preprocessing)
 - **Validation period:** **2016-01-01** through **2016-12-31** (12,872 rows)
 - **Holdout period:** loans with `issue_d` after **2016-12-31** (9,978 rows)
