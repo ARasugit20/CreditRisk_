@@ -33,13 +33,10 @@ XGBoost + Platt calibration (src/)
 **BQ-ready:** Replace DuckDB with BigQuery by updating `credit_risk_dbt/profiles.yml`.
 dbt models are warehouse-agnostic SQL.
 
-**Warehouse commands:**
+**Warehouse commands:** see **[docs/WAREHOUSE.md](docs/WAREHOUSE.md)** or run:
 
 ```bash
-pip install -r requirements.txt
-python scripts/load_to_duckdb.py
-cd credit_risk_dbt && dbt run --profiles-dir . && dbt test --profiles-dir . && cd ..
-python scripts/export_features.py
+bash scripts/run_warehouse.sh
 ```
 
 ## Executive Summary
