@@ -17,7 +17,7 @@ data/rejected_2007_to_2018q4.csv/
 
 # DuckDB warehouse + dbt exports (regenerate locally).
 data/*.duckdb
-data/mart_features.parquet
+data/mart_features*.parquet
 
 # Regenerate locally via preprocessing (see README Data Setup).
 data/processed_*.csv

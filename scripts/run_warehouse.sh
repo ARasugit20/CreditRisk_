@@ -20,4 +20,9 @@ echo "==> dbt run + test"
 echo "==> Export mart_features.parquet"
 "$PYTHON" scripts/export_features.py
 
-echo "==> Done. ML input: data/mart_features.parquet"
+echo "==> Train baseline on dbt mart splits"
+"$PYTHON" src/train.py \
+  --train-path data/mart_features_train.parquet \
+  --validation-path data/mart_features_validation.parquet
+
+echo "==> Done. ML inputs: data/mart_features*.parquet"
