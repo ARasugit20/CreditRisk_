@@ -19,7 +19,7 @@ SELECT
     COALESCE(
         try_strptime(CAST(issue_d AS VARCHAR), '%b-%Y')::DATE,
         try_cast(issue_d AS DATE)
-    ) AS issue_date,
+    ) AS issue_d,
     purpose,
     addr_state,
     CAST(dti AS DOUBLE) AS dti,
@@ -40,7 +40,7 @@ SELECT
             'Does not meet the credit policy. Status:Charged Off'
         ) THEN 1
         ELSE 0
-    END AS is_default
+    END AS loan_status
 FROM {{ source('raw', 'loans') }}
 WHERE loan_status IS NOT NULL
   AND issue_d IS NOT NULL

@@ -6,7 +6,7 @@
 
 SELECT
     f.loan_id,
-    f.issue_date,
+    f.issue_d,
     b.grade,
     b.sub_grade,
     b.income_tier,
@@ -23,6 +23,6 @@ SELECT
     f.total_acc,
     f.purpose,
     f.verification_status,
-    f.is_default
+    f.loan_status
 FROM {{ ref('fct_loan_performance') }} AS f
 LEFT JOIN {{ ref('dim_borrower') }} AS b USING (loan_id)

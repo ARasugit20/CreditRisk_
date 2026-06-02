@@ -71,6 +71,8 @@ def load_processed_split(path: str | Path) -> pd.DataFrame:
     if resolved is None or not resolved.exists():
         raise FileNotFoundError(f"Processed split not found: {path}")
     logging.info("Loading processed split from %s", resolved)
+    if resolved.suffix.lower() == ".parquet":
+        return pd.read_parquet(resolved)
     return pd.read_csv(resolved)
 
 

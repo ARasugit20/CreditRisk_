@@ -21,8 +21,8 @@ SELECT
     total_acc,
     purpose,
     verification_status,
-    issue_date,
-    is_default,
+    issue_d,
+    loan_status,
     (fico_range_low + fico_range_high) / 2.0 AS fico_mid,
     CASE
         WHEN revol_util IS NULL THEN 'unknown'

@@ -17,5 +17,5 @@ SELECT
         WHEN annual_inc < 150000 THEN 'high'
         ELSE 'very_high'
     END AS income_tier,
-    issue_date
+    issue_d
 FROM {{ ref('stg_loans') }}
